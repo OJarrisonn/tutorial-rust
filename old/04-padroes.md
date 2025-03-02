@@ -83,6 +83,7 @@ use std::num::ParseIntError;
 fn main() {
     let num: Result<i32, ParseIntError> = "42".parse::<i32>();
     let batata: Result<i32, ParseIntError> = "batata".parse::<i32>();
+    let ok: Result<i32, ()> = Ok(100); // Ou use `Err()` para instanciar um valor de erro
 
     dbg!(num);
     dbg!(batata);
@@ -116,7 +117,7 @@ fn main() {
 
     match result {
         Ok(len) => {
-            println!("você digitou {} caracteres: {}", len, buffer);
+            println!("Lidos {} bytes: {}", len, buffer);
         },
         Err(error) => {
             println!("Erro ao ler entrada: {}", error);
@@ -124,3 +125,99 @@ fn main() {
     }
 }
 ```
+
+A função `read_line` vai ler conteúdo do terminal e gravar em `buffer`. Todavia ler uma string do terminal pode falhar, por exemplo se você pressionar `CTRL+C`. Por isso, a função vai retornar um `Result<usize, Error>`, no caso `Ok` vamos ter a quantidade de bytes lidos, caso contrário vamos ter um erro de entrada `std::io::Error`.
+
+Note que `Ok(len)` vai capturar o valor encapsulado por `Ok` caso essa seja a variante, podemos melhorar nossa implementação para casos onde sejam lidos 1 ou 0 bytes:
+
+
+```rust
+fn main() {
+    let mut buffer: String = String::new();
+    let result: Result<usize, std::io::Error> = std::io::stdin().read_line(&mut buffer);
+
+    match result {
+        Ok(0) => {
+            println!("Nada lido");
+        },
+        Ok(1) => {
+            println!("Lido 1 byte: {}", buffer);
+        },
+        Ok(len) => {
+            println!("Lidos {} bytes: {}", len, buffer);
+        },
+        Err(error) => {
+            println!("Erro ao ler entrada: {}", error);
+        }
+    }
+}
+```
+
+A sintaxe do match é bastante simples: 
+
+- palavra reservada `match`
+- expressão de entrada (não necessita de parênteses)
+- corpo com ramos separados por `,`
+
+Cada ramo começa com um padrão, que pode ser:
+
+- um identificador (para capturar o valor)
+- um valor literal `12`, `true`, `'v'`
+- arrays
+- tuplas
+- variantes de enumerações (`Ok(...)`, `Err(...)`, `Some(...)`, `None`)
+- `_` (equivalente a um else)
+
+Em seguida pode-se usar um `if` como uma espécie de guarda para validar capturas no padrão. Poderiamos reimplementar o código acima usando guardas:
+
+```rust
+fn main() {
+    let mut buffer: String = String::new();
+    let result: Result<usize, std::io::Error> = std::io::stdin().read_line(&mut buffer);
+
+    match result {
+        Ok(len) if len == 0 => {
+            println!("Nada lido");
+        },
+        Ok(len) if len == 1 => {
+            println!("Lido 1 byte: {}", buffer);
+        },
+        Ok(len) => {
+            println!("Lidos {} bytes: {}", len, buffer);
+        },
+        Err(error) => {
+            println!("Erro ao ler entrada: {}", error);
+        }
+    }
+}
+```
+
+Por fim temos `=>` e o código a ser executado caso o padrão case, note que podemos usar `len` que é criado na captura do padrão dentro desse bloco.
+
+É válido mencionar que assim como `if` e o `loop`, `match` também pode ser usado como uma expressão. 
+
+```rust
+fn main() {
+    let mut buffer: String = String::new();
+    let result: Result<usize, std::io::Error> = std::io::stdin().read_line(&mut buffer);
+
+    let response = match result {
+        Ok(len) if len == 0 => {
+            format!("Nada lido")
+        },
+        Ok(len) if len == 1 => {
+            format!("Lido 1 byte: {}", buffer)
+        },
+        Ok(len) => {
+            format!("Lidos {} bytes: {}", len, buffer)
+        },
+        Err(error) => {
+            format!("Erro ao ler entrada: {}", error)
+        }
+    }
+
+    println!("{}", response);
+}
+```
+
+Todos os ramos precisam de retornar o mesmo tipo, a menos que eles terminem com `return`, `break` ou `continue` e o valor de retorno é a última expressão no bloco e não pode terminar com `;`.

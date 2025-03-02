@@ -263,4 +263,4 @@ fn main() {
 A diferença fundamental entre `String` e `&str` é que `String` é dona dos caracteres, enquanto `&str` apenas se refere aos caracteres possuídos por
 outra string.
 
-A seguir, vamos ver [casamento de padrões](./02-padroes.md), uma das features mais legais da linguagem
+A seguir, vamos ver [posse](./02-posse.md), o conceito mais importante da linguagem Rust.
